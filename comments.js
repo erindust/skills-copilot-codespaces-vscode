@@ -1,45 +1,36 @@
-// Create a web server
-// Create a form to submit a comment
-// Create a POST route to handle the form submission
-// Create a GET route to display the comments
-// Use a template engine to display the comments
-// Use a file to store the comments
+// Create web server
+var http = require("http");
+var url = require("url");
+var fs = require("fs");
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const fs = require('fs');
+// Create server
+http.createServer(function (request, response) {
+    // Parse the request containing file name
+    var pathname = url.parse(request.url).pathname;
 
-const app = express();
+    // Print the name of the file for which request is made
+    console.log("Request for " + pathname + " received.");
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+    // Read the requested file content from file system
+    fs.readFile(pathname.substr(1), function (err, data) {
+        if (err) {
+            console.log(err);
+            // HTTP Status: 404 : NOT FOUND
+            // Content Type: text/plain
+            response.writeHead(404, { "Content-Type": "text/html" });
+        } else {
+            // Page found
+            // HTTP Status: 200 : OK
+            // Content Type: text/plain
+            response.writeHead(200, { "Content-Type": "text/html" });
 
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
+            // Write the content of the file to response body
+            response.write(data.toString());
+        }
+        // Send the response body
+        response.end();
+    });
+}).listen(8081);
 
-app.post('/comment', (req, res) => {
-  const comment = req.body.comment;
-  fs.appendFile('comments.txt', comment + '\n', () => {
-    res.redirect('/comments');
-  });
-});
-
-app.get('/comments', (req, res) => {
-  fs.readFile('comments.txt', 'utf8', (err, data) => {
-    if (err) {
-      return res.send('No comments yet');
-    }
-    const comments = data.split('\n').filter(Boolean);
-    res.send(`
-      <h1>Comments</h1>
-      <ul>
-        ${comments.map(comment => `<li>${comment}</li>`).join('')}
-      </ul>
-    `);
-  });
-});
-
-app.listen(3000, () => {
-  console.log('Server is running on http://localhost:3000');
-});
+// Console will print the message
+console.log("Server running at http://");
